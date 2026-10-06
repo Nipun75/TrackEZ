@@ -4,6 +4,7 @@ from io import BytesIO
 from openpyxl import load_workbook
 from django.contrib.auth.models import User
 from django.test import TestCase
+from django.utils import timezone
 from django.urls import reverse
 from .models import Budget, Transaction
 
@@ -77,8 +78,9 @@ class TrackEZTests(TestCase):
         self.assertEqual(rows[1][3], "Travel")
 
     def test_budget_creation_and_dashboard_alert(self):
-        Budget.objects.create(user=self.user, month=date(2026, 1, 1), category=Transaction.FOOD, amount="1000")
-        self.add("Food", "900", Transaction.EXPENSE, category=Transaction.FOOD, day=date(2026, 1, 15))
+        current_month = timezone.localdate().replace(day=1)
+        Budget.objects.create(user=self.user, month=current_month, category=Transaction.FOOD, amount="1000")
+        self.add("Food", "900", Transaction.EXPENSE, category=Transaction.FOOD, day=timezone.localdate())
         response = self.client.get(reverse("dashboard"))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(any("used 90%" in x for x in response.context["insights"]))
