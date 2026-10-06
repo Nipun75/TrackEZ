@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<div class='row justify-content-center'><div class='col-md-5'><div class='card p-4 shadow-sm'><h2>Login</h2><form method='post'>{% csrf_token %}{{form.as_p}}<button class='btn btn-dark w-100'>Login</button></form><p class='mt-3'>New user? <a href='{% url "register" %}'>Register</a></p></div></div></div>{% endblock %}
