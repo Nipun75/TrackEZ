@@ -1,1 +1,26 @@
-{% extends 'base.html' %}{% block content %}<div class='d-flex justify-content-between align-items-center mb-4'><div><h1>Dashboard</h1><p class='text-muted'>Track income, expenses and balance.</p></div><div><a class='btn btn-success' href='{% url "add_income" %}'>+ Income</a> <a class='btn btn-danger' href='{% url "add_expense" %}'>+ Expense</a></div></div><div class='row g-3 mb-4'><div class='col-md-4'><div class='card p-3 shadow-sm'><small>Total Income</small><h3 class='text-success'>₹ {{income}}</h3></div></div><div class='col-md-4'><div class='card p-3 shadow-sm'><small>Total Expenses</small><h3 class='text-danger'>₹ {{expense}}</h3></div></div><div class='col-md-4'><div class='card p-3 shadow-sm'><small>Balance</small><h3>₹ {{balance}}</h3></div></div></div><div class='card p-4 shadow-sm mb-4'><h4>Income vs Expense</h4><canvas id='chart'></canvas></div><div class='card p-4 shadow-sm'><div class='d-flex justify-content-between'><h4>Recent Transactions</h4><a href='{% url "history" %}'>View all</a></div><table class='table'><tr><th>Title</th><th>Amount</th><th>Type</th><th>Date</th></tr>{% for t in recent %}<tr><td>{{t.title}}</td><td>₹ {{t.amount}}</td><td>{{t.get_transaction_type_display}}</td><td>{{t.date}}</td></tr>{% empty %}<tr><td colspan='4'>No transactions yet.</td></tr>{% endfor %}</table></div><script>new Chart(document.getElementById('chart'),{type:'line',data:{labels:{{labels|safe}},datasets:[{label:'Income',data:{{income_data|safe}},tension:.3},{label:'Expense',data:{{expense_data|safe}},tension:.3}]}}});</script>{% endblock %}
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+  <div><h1 class="mb-1">Dashboard</h1><p class="text-muted mb-0">Track income, expenses and balance.</p></div>
+  <div><a class="btn btn-success" href="{% url 'add_income' %}">+ Income</a> <a class="btn btn-danger" href="{% url 'add_expense' %}">+ Expense</a></div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card p-3 shadow-sm h-100"><small>Total Income</small><h3 class="text-success">₹ {{ income|floatformat:2 }}</h3></div></div>
+  <div class="col-md-4"><div class="card p-3 shadow-sm h-100"><small>Total Expenses</small><h3 class="text-danger">₹ {{ expense|floatformat:2 }}</h3></div></div>
+  <div class="col-md-4"><div class="card p-3 shadow-sm h-100"><small>Balance</small><h3>₹ {{ balance|floatformat:2 }}</h3></div></div>
+</div>
+<div class="row g-4">
+  <div class="col-lg-8"><div class="card p-4 shadow-sm h-100"><h4>Income vs Expense</h4><canvas id="trendChart"></canvas></div></div>
+  <div class="col-lg-4"><div class="card p-4 shadow-sm h-100"><h4>Top 5 Expenses</h4><canvas id="expenseChart"></canvas></div></div>
+</div>
+<div class="row g-4 mt-1">
+  <div class="col-lg-6"><div class="card p-4 shadow-sm"><h4>Top 5 Income</h4><canvas id="incomeChart"></canvas></div></div>
+  <div class="col-lg-6"><div class="card p-4 shadow-sm"><h4>Recent Transactions</h4><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Title</th><th>Amount</th><th>Type</th><th>Date</th></tr></thead><tbody>{% for t in recent %}<tr><td>{{ t.title }}</td><td>₹ {{ t.amount|floatformat:2 }}</td><td>{{ t.get_transaction_type_display }}</td><td>{{ t.date }}</td></tr>{% empty %}<tr><td colspan="4">No transactions yet.</td></tr>{% endfor %}</tbody></table></div><a href="{% url 'history' %}" class="btn btn-outline-dark">View full history</a></div></div>
+</div>
+<script>
+const labels = {{ labels_json|safe }};
+new Chart(document.getElementById("trendChart"), {type:"line", data:{labels:labels,datasets:[{label:"Income",data:{{ income_data_json|safe }},tension:.3},{label:"Expense",data:{{ expense_data_json|safe }},tension:.3}]}});
+new Chart(document.getElementById("expenseChart"), {type:"bar", data:{labels:{{ top_expense_labels_json|safe }},datasets:[{label:"Expense",data:{{ top_expense_data_json|safe }}}]},options:{plugins:{legend:{display:false}}}});
+new Chart(document.getElementById("incomeChart"), {type:"bar", data:{labels:{{ top_income_labels_json|safe }},datasets:[{label:"Income",data:{{ top_income_data_json|safe }}}]},options:{plugins:{legend:{display:false}}}});
+</script>
+{% endblock %}
