@@ -1,26 +1,14 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-  <div><h1 class="mb-1">Dashboard</h1><p class="text-muted mb-0">Track income, expenses and balance.</p></div>
-  <div><a class="btn btn-success" href="{% url 'add_income' %}">+ Income</a> <a class="btn btn-danger" href="{% url 'add_expense' %}">+ Expense</a></div>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-md-4"><div class="card p-3 shadow-sm h-100"><small>Total Income</small><h3 class="text-success">₹ {{ income|floatformat:2 }}</h3></div></div>
-  <div class="col-md-4"><div class="card p-3 shadow-sm h-100"><small>Total Expenses</small><h3 class="text-danger">₹ {{ expense|floatformat:2 }}</h3></div></div>
-  <div class="col-md-4"><div class="card p-3 shadow-sm h-100"><small>Balance</small><h3>₹ {{ balance|floatformat:2 }}</h3></div></div>
-</div>
-<div class="row g-4">
-  <div class="col-lg-8"><div class="card p-4 shadow-sm h-100"><h4>Income vs Expense</h4><canvas id="trendChart"></canvas></div></div>
-  <div class="col-lg-4"><div class="card p-4 shadow-sm h-100"><h4>Top 5 Expenses</h4><canvas id="expenseChart"></canvas></div></div>
-</div>
-<div class="row g-4 mt-1">
-  <div class="col-lg-6"><div class="card p-4 shadow-sm"><h4>Top 5 Income</h4><canvas id="incomeChart"></canvas></div></div>
-  <div class="col-lg-6"><div class="card p-4 shadow-sm"><h4>Recent Transactions</h4><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Title</th><th>Amount</th><th>Type</th><th>Date</th></tr></thead><tbody>{% for t in recent %}<tr><td>{{ t.title }}</td><td>₹ {{ t.amount|floatformat:2 }}</td><td>{{ t.get_transaction_type_display }}</td><td>{{ t.date }}</td></tr>{% empty %}<tr><td colspan="4">No transactions yet.</td></tr>{% endfor %}</tbody></table></div><a href="{% url 'history' %}" class="btn btn-outline-dark">View full history</a></div></div>
-</div>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4"><div><h1 class="mb-1">Dashboard</h1><p class="text-muted mb-0">TrackEZ — {{ month_label }} financial overview.</p></div><div><a class="btn btn-outline-dark" href="{% url 'budgets' %}">Budgets</a> <a class="btn btn-outline-dark" href="{% url 'monthly_report' %}">Monthly Report</a> <a class="btn btn-success" href="{% url 'add_income' %}">+ Income</a> <a class="btn btn-danger" href="{% url 'add_expense' %}">+ Expense</a></div></div>
+<div class="row g-3 mb-4"><div class="col-md-3"><div class="card p-3 shadow-sm h-100"><small>Total Income</small><h3 class="text-success">₹ {{ income|floatformat:2 }}</h3></div></div><div class="col-md-3"><div class="card p-3 shadow-sm h-100"><small>Total Expenses</small><h3 class="text-danger">₹ {{ expense|floatformat:2 }}</h3></div></div><div class="col-md-3"><div class="card p-3 shadow-sm h-100"><small>Balance</small><h3>₹ {{ balance|floatformat:2 }}</h3></div></div><div class="col-md-3"><div class="card p-3 shadow-sm h-100"><small>Current Month</small><h3>₹ {{ month_expense|floatformat:2 }}</h3><small class="text-muted">spent</small></div></div></div>
+{% if insights %}<div class="card p-4 shadow-sm mb-4"><h4>💡 Financial Insights & Alerts</h4><ul class="mb-0">{% for insight in insights %}<li class="mb-2">{{ insight }}</li>{% endfor %}</ul></div>{% endif %}
+<div class="row g-4"><div class="col-lg-8"><div class="card p-4 shadow-sm h-100"><h4>Income vs Expense Trend</h4><canvas id="trendChart"></canvas></div></div><div class="col-lg-4"><div class="card p-4 shadow-sm h-100"><h4>Top 5 Expenses</h4><canvas id="expenseChart"></canvas></div></div></div>
+<div class="row g-4 mt-1"><div class="col-lg-6"><div class="card p-4 shadow-sm"><h4>Category Analytics — {{ month_label }}</h4><div class="table-responsive"><table class="table"><thead><tr><th>Category</th><th>Spent</th><th>Budget</th><th>Usage</th></tr></thead><tbody>{% for row in category_rows %}<tr><td>{{ row.category }}</td><td>₹ {{ row.spent|floatformat:2 }}</td><td>₹ {{ row.budget|floatformat:2 }}</td><td>{{ row.usage|floatformat:0 }}%</td></tr>{% empty %}<tr><td colspan="4">Add expenses or budgets to see analytics.</td></tr>{% endfor %}</tbody></table></div></div></div><div class="col-lg-6"><div class="card p-4 shadow-sm"><h4>Top 5 Income</h4><canvas id="incomeChart"></canvas></div></div></div>
+<div class="card p-4 shadow-sm mt-4"><h4>Recent Transactions</h4><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Title</th><th>Category</th><th>Amount</th><th>Type</th><th>Date</th></tr></thead><tbody>{% for t in recent %}<tr><td>{{ t.title }}</td><td>{{ t.get_category_display }}</td><td>₹ {{ t.amount|floatformat:2 }}</td><td>{{ t.get_transaction_type_display }}</td><td>{{ t.date }}</td></tr>{% empty %}<tr><td colspan="5">No transactions yet.</td></tr>{% endfor %}</tbody></table></div><a href="{% url 'history' %}" class="btn btn-outline-dark">View full history</a></div>
 <script>
-const labels = {{ labels_json|safe }};
-new Chart(document.getElementById("trendChart"), {type:"line", data:{labels:labels,datasets:[{label:"Income",data:{{ income_data_json|safe }},tension:.3},{label:"Expense",data:{{ expense_data_json|safe }},tension:.3}]}});
-new Chart(document.getElementById("expenseChart"), {type:"bar", data:{labels:{{ top_expense_labels_json|safe }},datasets:[{label:"Expense",data:{{ top_expense_data_json|safe }}}]},options:{plugins:{legend:{display:false}}}});
-new Chart(document.getElementById("incomeChart"), {type:"bar", data:{labels:{{ top_income_labels_json|safe }},datasets:[{label:"Income",data:{{ top_income_data_json|safe }}}]},options:{plugins:{legend:{display:false}}}});
+const labels={{ labels_json|safe }}; new Chart(document.getElementById("trendChart"),{type:"line",data:{labels:labels,datasets:[{label:"Income",data:{{ income_data_json|safe }},tension:.3},{label:"Expense",data:{{ expense_data_json|safe }},tension:.3}]}});
+new Chart(document.getElementById("expenseChart"),{type:"bar",data:{labels:{{ top_expense_labels_json|safe }},datasets:[{label:"Expense",data:{{ top_expense_data_json|safe }}}]},options:{plugins:{legend:{display:false}}}});
+new Chart(document.getElementById("incomeChart"),{type:"bar",data:{labels:{{ top_income_labels_json|safe }},datasets:[{label:"Income",data:{{ top_income_data_json|safe }}}]},options:{plugins:{legend:{display:false}}}});
 </script>
 {% endblock %}
